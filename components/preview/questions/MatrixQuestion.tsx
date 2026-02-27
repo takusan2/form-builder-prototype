@@ -2,7 +2,6 @@
 
 import type { Question } from "@/lib/types/survey";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface Props {
   question: Question;
@@ -23,13 +22,11 @@ export function MatrixQuestion({ question, value, onChange }: Props) {
     const col = columns.find((c) => c.value === colValue);
 
     if (col?.isExclusive && checked) {
-      // 排他列を選んだ → その列だけにする
       onChange({ ...value, [rowId]: colValue });
       return;
     }
 
     if (checked) {
-      // 非排他列を選んだ → 排他列を外す
       const exclusiveValues = columns
         .filter((c) => c.isExclusive)
         .map((c) => c.value);
@@ -41,13 +38,19 @@ export function MatrixQuestion({ question, value, onChange }: Props) {
   };
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+    <div className="scrollbar-always-visible">
+      <table className="table-fixed border-collapse text-sm" style={{ width: `${120 + columns.length * 80}px` }}>
+        <colgroup>
+          <col style={{ width: 120 }} />
+          {columns.map((col) => (
+            <col key={col.id} style={{ width: 80 }} />
+          ))}
+        </colgroup>
         <thead>
           <tr>
-            <th className="pb-2 text-left font-medium" />
+            <th className="pb-2 pr-4 text-left font-medium" />
             {columns.map((col) => (
-              <th key={col.id} className="pb-2 text-center font-medium">
+              <th key={col.id} className="pb-2 text-center font-medium break-words">
                 {col.text}
               </th>
             ))}
@@ -57,36 +60,41 @@ export function MatrixQuestion({ question, value, onChange }: Props) {
           {rows.map((row) => (
             <tr key={row.id} className="border-t">
               <td className="py-3 pr-4 font-medium">{row.text}</td>
-              {question.type === "matrix_single" ? (
-                <td colSpan={columns.length} className="py-3">
-                  <RadioGroup
-                    value={value[row.id] || ""}
-                    onValueChange={(v) => handleSingleChange(row.id, v)}
-                    className="flex justify-around"
-                  >
-                    {columns.map((col) => (
-                      <div key={col.id} className="flex justify-center">
-                        <RadioGroupItem value={col.value} id={`${row.id}-${col.id}`} />
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </td>
-              ) : (
-                columns.map((col) => {
-                  const currentValues = (value[row.id] || "").split(",").filter(Boolean);
-                  return (
-                    <td key={col.id} className="py-3 text-center">
-                      <Checkbox
-                        id={`${row.id}-${col.id}`}
-                        checked={currentValues.includes(col.value)}
-                        onCheckedChange={(checked) =>
-                          handleMultipleChange(row.id, col.value, checked === true)
-                        }
-                      />
-                    </td>
-                  );
-                })
-              )}
+              {question.type === "matrix_single"
+                ? columns.map((col) => {
+                    const selected = value[row.id] === col.value;
+                    return (
+                      <td key={col.id} className="py-3 text-center">
+                        <div className="flex justify-center">
+                          <button
+                            type="button"
+                            role="radio"
+                            aria-checked={selected}
+                            className={`h-4 w-4 rounded-full border ${
+                              selected
+                                ? "border-primary bg-primary shadow-[inset_0_0_0_2px_white]"
+                                : "border-input bg-background"
+                            }`}
+                            onClick={() => handleSingleChange(row.id, col.value)}
+                          />
+                        </div>
+                      </td>
+                    );
+                  })
+                : columns.map((col) => {
+                    const currentValues = (value[row.id] || "").split(",").filter(Boolean);
+                    return (
+                      <td key={col.id} className="py-3 text-center">
+                        <Checkbox
+                          id={`${row.id}-${col.id}`}
+                          checked={currentValues.includes(col.value)}
+                          onCheckedChange={(checked) =>
+                            handleMultipleChange(row.id, col.value, checked === true)
+                          }
+                        />
+                      </td>
+                    );
+                  })}
             </tr>
           ))}
         </tbody>

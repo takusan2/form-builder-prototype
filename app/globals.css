@@ -124,3 +124,21 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* マトリクス設問: スクロールバー常時表示 */
+.scrollbar-always-visible {
+  overflow-x: scroll;
+}
+.scrollbar-always-visible::-webkit-scrollbar {
+  height: 8px;
+}
+.scrollbar-always-visible::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-always-visible::-webkit-scrollbar-thumb {
+  background: oklch(0.7 0 0 / 40%);
+  border-radius: 4px;
+}
+.scrollbar-always-visible::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.5 0 0 / 60%);
+}

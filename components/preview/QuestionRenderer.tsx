@@ -1,7 +1,6 @@
 "use client";
 
 import type { Question, AnswerValue } from "@/lib/types/survey";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SingleChoiceQuestion } from "./questions/SingleChoiceQuestion";
 import { MultipleChoiceQuestion } from "./questions/MultipleChoiceQuestion";
@@ -49,27 +48,23 @@ export function QuestionRenderer({ question, index, value, error, onChange }: Qu
   };
 
   return (
-    <Card className={error ? "border-destructive" : ""}>
-      <CardHeader className="pb-3">
-        <div className="flex items-start gap-2">
-          <CardTitle className="text-base font-medium leading-relaxed">
-            <span className="mr-1 text-muted-foreground">Q{index + 1}.</span>
-            {question.text}
-          </CardTitle>
-          {question.required && (
-            <Badge variant="destructive" className="shrink-0 text-xs">
-              必須
-            </Badge>
-          )}
-        </div>
-        {question.description && (
-          <p className="text-sm text-muted-foreground">{question.description}</p>
+    <div className={`space-y-3 border-b pb-6 ${error ? "border-destructive" : "border-border"}`}>
+      <div className="flex items-start gap-2">
+        <p className="text-base font-medium leading-relaxed">
+          <span className="mr-1 text-muted-foreground">Q{index + 1}.</span>
+          {question.text}
+        </p>
+        {question.required && (
+          <Badge variant="destructive" className="shrink-0 text-xs">
+            必須
+          </Badge>
         )}
-      </CardHeader>
-      <CardContent>
-        {renderQuestion()}
-        {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
-      </CardContent>
-    </Card>
+      </div>
+      {question.description && (
+        <p className="text-sm text-muted-foreground">{question.description}</p>
+      )}
+      {renderQuestion()}
+      {error && <p className="mt-1 text-sm text-destructive">{error}</p>}
+    </div>
   );
 }
