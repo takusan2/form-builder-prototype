@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Survey {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @default("")
+  status      String   @default("draft") // draft | published | closed
+  settings    Json     @default("{}")
+  structure   Json     @default("{}")
+  quotas      Json     @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  webhooks      Webhook[]
+  quotaCounters QuotaCounter[]
+  responses     Response[]
+}
+
+model Response {
+  id               String   @id @default(cuid())
+  surveyId         String
+  status           String   @default("completed") // completed | disqualified
+  respondentUid    String?
+  respondentParams Json     @default("{}")
+  data             Json     @default("{}")
+  duration         Int      @default(0) // seconds
+  pageHistory      Json     @default("[]")
+  completedAt      DateTime @default(now())
+  createdAt        DateTime @default(now())
+
+  survey Survey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+
+  @@index([surveyId])
+}
+
+model Webhook {
+  id            String   @id @default(cuid())
+  surveyId      String
+  url           String
+  method        String   @default("POST")
+  headers       Json     @default("{}")
+  secret        String   @default("")
+  enabled       Boolean  @default(true)
+  retryCount    Int      @default(3)
+  retryInterval Int      @default(1000) // ms
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  survey Survey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+}
+
+// カウントだけを保持する（回答データは保持しない）
+model QuotaCounter {
+  id       String @id @default(cuid())
+  surveyId String
+  quotaId  String // Survey.quotas JSON内のQuota.idに対応
+  count    Int    @default(0)
+
+  survey Survey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+
+  @@unique([surveyId, quotaId])
+}
