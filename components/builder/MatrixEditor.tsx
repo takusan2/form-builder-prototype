@@ -28,6 +28,8 @@ interface MatrixEditorProps {
   question: Question;
   pageId: string;
   locked?: boolean;
+  /** trueの場合、列セクションのみ表示（行はキャリーフォワードで管理） */
+  columnsOnly?: boolean;
 }
 
 function SortableRowItem({
@@ -154,7 +156,7 @@ function SortableColumnItem({
   );
 }
 
-export function MatrixEditor({ question, pageId, locked }: MatrixEditorProps) {
+export function MatrixEditor({ question, pageId, locked, columnsOnly }: MatrixEditorProps) {
   const { updateQuestion } = useSurveyBuilderStore();
   const showExclusive = question.type === "matrix_multiple";
 
@@ -202,48 +204,50 @@ export function MatrixEditor({ question, pageId, locked }: MatrixEditorProps) {
   return (
     <div className="space-y-4">
       {/* Rows */}
-      <div className="space-y-2">
-        <Label className="text-sm font-medium">行（項目）</Label>
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          modifiers={[restrictToVerticalAxis]}
-          onDragEnd={handleRowDragEnd}
-        >
-          <SortableContext
-            items={rows.map((r) => r.id)}
-            strategy={verticalListSortingStrategy}
+      {!columnsOnly && (
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">行（項目）</Label>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            modifiers={[restrictToVerticalAxis]}
+            onDragEnd={handleRowDragEnd}
           >
-            {rows.map((row, index) => (
-              <SortableRowItem
-                key={row.id}
-                row={row}
-                index={index}
-                canDelete={rows.length > 1}
-                locked={locked}
-                onUpdate={(text) => {
-                  const newRows = [...rows];
-                  newRows[index] = { ...row, text };
-                  updateRows(newRows);
-                }}
-                onDelete={() => updateRows(rows.filter((r) => r.id !== row.id))}
-              />
-            ))}
-          </SortableContext>
-        </DndContext>
-        {!locked && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              updateRows([...rows, { id: nanoid(8), text: `行 ${rows.length + 1}` }])
-            }
-          >
-            <Plus className="mr-1 h-3 w-3" />
-            行を追加
-          </Button>
-        )}
-      </div>
+            <SortableContext
+              items={rows.map((r) => r.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {rows.map((row, index) => (
+                <SortableRowItem
+                  key={row.id}
+                  row={row}
+                  index={index}
+                  canDelete={rows.length > 1}
+                  locked={locked}
+                  onUpdate={(text) => {
+                    const newRows = [...rows];
+                    newRows[index] = { ...row, text };
+                    updateRows(newRows);
+                  }}
+                  onDelete={() => updateRows(rows.filter((r) => r.id !== row.id))}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
+          {!locked && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                updateRows([...rows, { id: nanoid(8), text: `行 ${rows.length + 1}` }])
+              }
+            >
+              <Plus className="mr-1 h-3 w-3" />
+              行を追加
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* Columns */}
       <div className="space-y-2">

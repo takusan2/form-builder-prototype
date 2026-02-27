@@ -37,7 +37,7 @@ export default function PublicSurveyPage() {
       })
       .then(async (data: Survey) => {
         if (data.status !== "published") {
-          setError("このアンケートは現在公開されていません");
+          setError("このアンケートは現在受け付けておりません。");
           return;
         }
         const currentParams = urlParams.current;
@@ -45,7 +45,7 @@ export default function PublicSurveyPage() {
         const required = data.settings.respondent?.requiredParams || [];
         const missing = required.filter((p) => p && !currentParams[p]);
         if (missing.length > 0) {
-          setError(`必須パラメータが不足しています: ${missing.join(", ")}`);
+          setError("このURLからはアンケートにアクセスできません。配布元のURLをご確認ください。");
           return;
         }
         // 重複回答プリチェック
@@ -59,7 +59,7 @@ export default function PublicSurveyPage() {
               );
               const checkData = await checkRes.json();
               if (checkData.exists) {
-                setError("この回答者は既に回答済みです");
+                setError("すでにご回答いただいております。ありがとうございました。");
                 return;
               }
             } catch { /* チェック失敗時はそのまま進む */ }
@@ -68,7 +68,7 @@ export default function PublicSurveyPage() {
         setSurvey(data);
         pageHistory.current = [data.structure.pages[0]?.id || ""];
       })
-      .catch(() => setError("アンケートが見つかりません"));
+      .catch(() => setError("アンケートが見つかりませんでした。URLをご確認ください。"));
   }, [surveyId]);
 
   const handleComplete = async (data: ResponseData) => {
@@ -95,7 +95,7 @@ export default function PublicSurveyPage() {
       });
       const result = await res.json();
       if (result.error === "duplicate") {
-        setError("この回答者は既に回答済みです");
+        setError("すでにご回答いただいております。ありがとうございました。");
         return;
       }
       if (result.disqualified) {
@@ -110,7 +110,7 @@ export default function PublicSurveyPage() {
         if (result.redirectUrl) {
           window.location.href = result.redirectUrl;
         } else {
-          setError("このアンケートは受付を終了しました");
+          setError("このアンケートは受付を終了いたしました。ご協力ありがとうございました。");
         }
         return;
       }

@@ -78,6 +78,25 @@ export default function ResponsesPage() {
       )
     : [];
 
+  // キャリーフォワード設問のmatrixRows/choicesを参照元から解決するヘルパー
+  const resolveQuestion = (q: Question & { pageTitle: string }): Question & { pageTitle: string } => {
+    const cf = q.carryForward;
+    if (!cf) return q;
+    const source = allQuestions.find((sq) => sq.id === cf.questionId);
+    if (!source) return q;
+    const sourceChoices = source.choices || [];
+    if (q.type === "matrix_single" || q.type === "matrix_multiple") {
+      return {
+        ...q,
+        matrixRows: sourceChoices.map((c) => ({ id: c.value, text: c.text })),
+      };
+    }
+    if (q.type === "single_choice" || q.type === "multiple_choice") {
+      return { ...q, choices: sourceChoices };
+    }
+    return q;
+  };
+
   const fetchResponses = useCallback(
     async (page = 1) => {
       setLoading(true);
@@ -294,7 +313,7 @@ export default function ResponsesPage() {
                           key={q.id}
                           className="max-w-40 truncate text-sm"
                         >
-                          {formatAnswer(r.data[q.id], q)}
+                          {formatAnswer(r.data[q.id], resolveQuestion(q))}
                         </TableCell>
                       ))}
                       {allQuestions.length > 3 && (
@@ -428,6 +447,7 @@ export default function ResponsesPage() {
 
               <div className="space-y-3">
                 {allQuestions.map((q) => {
+                  const resolved = resolveQuestion(q);
                   const answer = selectedResponse.data[q.id];
                   return (
                     <div key={q.id} className="rounded-md border p-3">
@@ -436,7 +456,7 @@ export default function ResponsesPage() {
                       </p>
                       <p className="mb-2 text-sm font-medium">{q.text}</p>
                       <p className="text-sm">
-                        {formatAnswer(answer, q)}
+                        {formatAnswer(answer, resolved)}
                       </p>
                     </div>
                   );

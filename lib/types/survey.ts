@@ -66,6 +66,13 @@ export interface ValidationRule {
 // 設問
 // =============================================
 
+export interface CarryForward {
+  /** 参照元の設問ID */
+  questionId: string;
+  /** "selected"=選択されたもの, "not_selected"=選択されなかったもの */
+  mode: "selected" | "not_selected";
+}
+
 export interface Question {
   id: string;
   type: QuestionType;
@@ -82,6 +89,8 @@ export interface Question {
   validation?: ValidationRule;
   displayCondition?: DisplayCondition;
   randomizeChoices?: boolean;
+  /** 選択肢引き継ぎ（キャリーフォワード） */
+  carryForward?: CarryForward;
 }
 
 // =============================================

@@ -17,7 +17,6 @@ export async function GET(
     where: {
       surveyId,
       respondentUid: uid,
-      status: "completed",
     },
     select: { id: true },
   });

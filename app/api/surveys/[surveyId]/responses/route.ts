@@ -83,12 +83,11 @@ export async function POST(
       where: {
         surveyId,
         respondentUid: respondent.uid,
-        status: "completed",
       },
     });
     if (existing) {
       return NextResponse.json(
-        { error: "duplicate", message: "この回答者は既に回答済みです" },
+        { error: "duplicate", message: "すでにご回答いただいております" },
         { status: 409 }
       );
     }
@@ -134,6 +133,19 @@ export async function POST(
         });
       }
       if (quota.action === "close") {
+        // 受付終了でも回答を保存（重複回答防止のため）
+        await prisma.response.create({
+          data: {
+            surveyId,
+            status: "quota_closed",
+            respondentUid: respondent?.uid,
+            respondentParams: respondent?.params || {},
+            data: data as Prisma.InputJsonValue,
+            duration: metadata?.duration || 0,
+            pageHistory: metadata?.pageHistory || [],
+            completedAt: metadata?.completedAt ? new Date(metadata.completedAt) : new Date(),
+          },
+        });
         const redirect = survey.settings.redirect;
         return NextResponse.json({
           success: false,

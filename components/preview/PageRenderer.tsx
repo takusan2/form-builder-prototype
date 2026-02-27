@@ -2,17 +2,19 @@
 
 import type { SurveyPage, Question, AnswerValue, ResponseData } from "@/lib/types/survey";
 import type { ValidationError } from "@/lib/engine/validation-engine";
+import { resolveCarryForward } from "@/lib/engine/carry-forward";
 import { QuestionRenderer } from "./QuestionRenderer";
 
 interface PageRendererProps {
   page: SurveyPage;
   questions: Question[];
+  allQuestions: Question[];
   answers: ResponseData;
   errors: ValidationError[];
   onAnswer: (questionId: string, value: AnswerValue) => void;
 }
 
-export function PageRenderer({ page, questions, answers, errors, onAnswer }: PageRendererProps) {
+export function PageRenderer({ page, questions, allQuestions, answers, errors, onAnswer }: PageRendererProps) {
   return (
     <div className="space-y-6">
       {page.title && (
@@ -24,11 +26,12 @@ export function PageRenderer({ page, questions, answers, errors, onAnswer }: Pag
         </div>
       )}
       {questions.map((question, index) => {
+        const resolved = resolveCarryForward(question, allQuestions, answers);
         const error = errors.find((e) => e.questionId === question.id);
         return (
           <QuestionRenderer
             key={question.id}
-            question={question}
+            question={resolved}
             index={index}
             value={answers[question.id]}
             error={error?.message}

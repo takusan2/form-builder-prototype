@@ -11,15 +11,15 @@ export function validateQuestion(question: Question, answer: AnswerValue | undef
   // Required check
   if (question.required) {
     if (answer === undefined || answer === null || answer === "") {
-      return "この設問は必須です";
+      return "この質問は回答必須です";
     }
     if (Array.isArray(answer) && answer.length === 0) {
-      return "この設問は必須です";
+      return "この質問は回答必須です";
     }
     if (typeof answer === "object" && !Array.isArray(answer)) {
       const values = Object.values(answer);
       if (values.length === 0 || values.every((v) => v === "")) {
-        return "この設問は必須です";
+        return "この質問は回答必須です";
       }
     }
   }

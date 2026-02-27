@@ -7,6 +7,7 @@ import { ProgressBar } from "./ProgressBar";
 import { NavigationButtons } from "./NavigationButtons";
 import { validatePage } from "@/lib/engine/validation-engine";
 import { determineNextPage, getVisibleQuestions } from "@/lib/engine/branching-engine";
+import { resolveCarryForward } from "@/lib/engine/carry-forward";
 import type { ValidationError } from "@/lib/engine/validation-engine";
 
 interface SurveyRendererProps {
@@ -26,6 +27,7 @@ export function SurveyRenderer({ survey, isPreview, onComplete, onDisqualify }: 
   const startTime = useRef(Date.now());
 
   const currentPage = pages[currentPageIndex];
+  const allQuestions = pages.flatMap((p) => p.questions);
   const visibleQuestions = getVisibleQuestions(currentPage.questions, answers);
 
   const handleAnswer = useCallback((questionId: string, value: AnswerValue) => {
@@ -36,8 +38,11 @@ export function SurveyRenderer({ survey, isPreview, onComplete, onDisqualify }: 
   const handleNext = useCallback(async () => {
     if (submitting) return;
 
-    // Validate current page
-    const pageErrors = validatePage(visibleQuestions, answers);
+    // Validate current page (キャリーフォワード解決済みの設問でバリデーション)
+    const resolvedQuestions = visibleQuestions.map((q) =>
+      resolveCarryForward(q, allQuestions, answers)
+    );
+    const pageErrors = validatePage(resolvedQuestions, answers);
     if (pageErrors.length > 0) {
       setErrors(pageErrors);
       return;
@@ -74,7 +79,7 @@ export function SurveyRenderer({ survey, isPreview, onComplete, onDisqualify }: 
     }
 
     setErrors([]);
-  }, [submitting, visibleQuestions, answers, currentPage, pages, currentPageIndex, onDisqualify]);
+  }, [submitting, visibleQuestions, allQuestions, answers, currentPage, pages, currentPageIndex, onDisqualify]);
 
   const handleBack = useCallback(() => {
     if (!survey.settings.allowBack) return;
@@ -109,6 +114,7 @@ export function SurveyRenderer({ survey, isPreview, onComplete, onDisqualify }: 
       <PageRenderer
         page={currentPage}
         questions={visibleQuestions}
+        allQuestions={allQuestions}
         answers={answers}
         errors={errors}
         onAnswer={handleAnswer}
