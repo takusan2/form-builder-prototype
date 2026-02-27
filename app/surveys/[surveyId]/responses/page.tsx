@@ -162,13 +162,25 @@ export default function ResponsesPage() {
     });
   };
 
-  const formatAnswer = (val: unknown): string => {
+  const formatAnswer = (val: unknown, question?: Question & { pageTitle: string }): string => {
     if (val === undefined || val === null) return "-";
     if (Array.isArray(val)) return val.join(", ");
-    if (typeof val === "object") {
-      return Object.entries(val as Record<string, unknown>)
-        .map(([k, v]) => `${k}: ${v}`)
-        .join(", ");
+    if (typeof val === "object" && val !== null) {
+      const entries = Object.entries(val as Record<string, unknown>);
+      // マトリクス設問: rowId→行テキスト, colValue→列テキストに変換
+      if (question && (question.type === "matrix_single" || question.type === "matrix_multiple")) {
+        const rowMap = new Map(question.matrixRows?.map((r) => [r.id, r.text]) || []);
+        const colMap = new Map(question.matrixColumns?.map((c) => [c.value, c.text]) || []);
+        return entries
+          .map(([rowId, colVal]) => {
+            const rowText = rowMap.get(rowId) || rowId;
+            const colValues = String(colVal).split(",").filter(Boolean);
+            const colTexts = colValues.map((v) => colMap.get(v) || v);
+            return `${rowText}: ${colTexts.join(", ")}`;
+          })
+          .join(" / ");
+      }
+      return entries.map(([k, v]) => `${k}: ${v}`).join(", ");
     }
     return String(val);
   };
@@ -282,7 +294,7 @@ export default function ResponsesPage() {
                           key={q.id}
                           className="max-w-40 truncate text-sm"
                         >
-                          {formatAnswer(r.data[q.id])}
+                          {formatAnswer(r.data[q.id], q)}
                         </TableCell>
                       ))}
                       {allQuestions.length > 3 && (
@@ -424,7 +436,7 @@ export default function ResponsesPage() {
                       </p>
                       <p className="mb-2 text-sm font-medium">{q.text}</p>
                       <p className="text-sm">
-                        {formatAnswer(answer)}
+                        {formatAnswer(answer, q)}
                       </p>
                     </div>
                   );

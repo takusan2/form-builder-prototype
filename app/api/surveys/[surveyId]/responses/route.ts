@@ -4,7 +4,7 @@ import type { Prisma } from "@/lib/generated/prisma/client";
 import { parseSurvey } from "@/lib/survey-helpers";
 import { sendWebhook } from "@/lib/services/webhook-service";
 import { findExceededQuotas, getMatchingQuotaIds } from "@/lib/engine/quota-engine";
-import type { WebhookPayload, ResponseData } from "@/lib/types/survey";
+import type { WebhookPayload, ResponseData, RedirectSettings } from "@/lib/types/survey";
 
 // GET /api/surveys/[surveyId]/responses - 回答一覧
 export async function GET(
@@ -33,6 +33,24 @@ export async function GET(
   });
 }
 
+function buildRedirectUrl(
+  baseUrl: string | undefined,
+  passParams: boolean,
+  params?: Record<string, string>
+): string | undefined {
+  if (!baseUrl) return undefined;
+  if (!passParams || !params || Object.keys(params).length === 0) return baseUrl;
+  try {
+    const url = new URL(baseUrl);
+    for (const [key, value] of Object.entries(params)) {
+      url.searchParams.set(key, value);
+    }
+    return url.toString();
+  } catch {
+    return baseUrl;
+  }
+}
+
 // POST /api/surveys/[surveyId]/responses - 回答送信
 export async function POST(
   request: NextRequest,
@@ -56,6 +74,24 @@ export async function POST(
   const survey = parseSurvey(raw);
   if (survey.status !== "published") {
     return NextResponse.json({ error: "Survey is not published" }, { status: 400 });
+  }
+
+  // --- 重複回答チェック ---
+  const respondentSettings = survey.settings.respondent;
+  if (respondentSettings?.preventDuplicate && respondent?.uid) {
+    const existing = await prisma.response.findFirst({
+      where: {
+        surveyId,
+        respondentUid: respondent.uid,
+        status: "completed",
+      },
+    });
+    if (existing) {
+      return NextResponse.json(
+        { error: "duplicate", message: "この回答者は既に回答済みです" },
+        { status: 409 }
+      );
+    }
   }
 
   // --- クオータチェック ---
@@ -84,19 +120,31 @@ export async function POST(
             completedAt: metadata?.completedAt ? new Date(metadata.completedAt) : new Date(),
           },
         });
+        const redirect = survey.settings.redirect;
         return NextResponse.json({
           success: false,
           disqualified: true,
           reason: "quota_exceeded",
           quotaId: quota.id,
+          redirectUrl: buildRedirectUrl(
+            redirect?.disqualifyUrl,
+            redirect?.passParams ?? false,
+            respondent?.params
+          ),
         });
       }
       if (quota.action === "close") {
+        const redirect = survey.settings.redirect;
         return NextResponse.json({
           success: false,
           closed: true,
           reason: "quota_full",
           quotaId: quota.id,
+          redirectUrl: buildRedirectUrl(
+            redirect?.quotaFullUrl,
+            redirect?.passParams ?? false,
+            respondent?.params
+          ),
         });
       }
     }
@@ -164,8 +212,14 @@ export async function POST(
       )
   );
 
+  const redirect = survey.settings.redirect;
   return NextResponse.json({
     success: true,
+    redirectUrl: buildRedirectUrl(
+      redirect?.completionUrl,
+      redirect?.passParams ?? false,
+      respondent?.params
+    ),
     webhooks: webhookResults.map((r) =>
       r.status === "fulfilled" ? r.value : { success: false, error: "Failed" }
     ),

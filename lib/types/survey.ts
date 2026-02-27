@@ -198,12 +198,34 @@ export interface SurveyStructure {
 
 export type SurveyStatus = "draft" | "published" | "closed";
 
+export interface RedirectSettings {
+  /** 回答完了後のリダイレクトURL */
+  completionUrl?: string;
+  /** 対象外(disqualify)時のリダイレクトURL */
+  disqualifyUrl?: string;
+  /** クオータ上限到達時のリダイレクトURL */
+  quotaFullUrl?: string;
+  /** リダイレクトURLにURLパラメータを引き継ぐか */
+  passParams?: boolean;
+}
+
+export interface RespondentSettings {
+  /** 必須URLパラメータ名リスト（これがないとアンケートにアクセス不可） */
+  requiredParams?: string[];
+  /** 回答者識別に使うURLパラメータ名（respondentUidとして保存） */
+  identifierParam?: string;
+  /** 同一識別子での重複回答を防止するか */
+  preventDuplicate?: boolean;
+}
+
 export interface SurveySettings {
   showProgressBar?: boolean;
   allowBack?: boolean;
   randomizePages?: boolean;
   completionMessage?: string;
   disqualifyMessage?: string;
+  redirect?: RedirectSettings;
+  respondent?: RespondentSettings;
 }
 
 export interface Survey {

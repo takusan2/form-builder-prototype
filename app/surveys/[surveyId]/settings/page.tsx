@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Save, Copy, Check } from "lucide-react";
+import { Save, Copy, Check, ExternalLink, ShieldCheck, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
@@ -124,6 +124,185 @@ export default function SettingsPage() {
               value={settings.disqualifyMessage || ""}
               onChange={(e) => setSettings({ ...settings, disqualifyMessage: e.target.value })}
               rows={2}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4" />
+              回答者制御
+            </div>
+          </CardTitle>
+          <CardDescription>
+            URLパラメータによる回答者の識別・アクセス制限・重複防止を設定します
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>回答者識別パラメータ</Label>
+            <p className="mb-2 text-xs text-muted-foreground">
+              回答者を一意に識別するURLパラメータ名を指定します。回答データの「回答者」列に保存されます。
+            </p>
+            <Input
+              value={settings.respondent?.identifierParam || ""}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  respondent: { ...settings.respondent, identifierParam: e.target.value },
+                })
+              }
+              placeholder="例: uid"
+              className="max-w-xs"
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>同一回答者の重複回答を防止</Label>
+              <p className="text-xs text-muted-foreground">
+                識別パラメータが同じ値の場合、2回目以降の回答をブロックします
+              </p>
+            </div>
+            <Switch
+              checked={settings.respondent?.preventDuplicate ?? false}
+              onCheckedChange={(v) =>
+                setSettings({
+                  ...settings,
+                  respondent: { ...settings.respondent, preventDuplicate: v },
+                })
+              }
+            />
+          </div>
+          <div>
+            <Label>必須URLパラメータ</Label>
+            <p className="mb-2 text-xs text-muted-foreground">
+              指定されたパラメータがURLに含まれない場合、アンケートを表示しません
+            </p>
+            <div className="space-y-2">
+              {(settings.respondent?.requiredParams || []).map((param, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Input
+                    value={param}
+                    onChange={(e) => {
+                      const newParams = [...(settings.respondent?.requiredParams || [])];
+                      newParams[i] = e.target.value;
+                      setSettings({
+                        ...settings,
+                        respondent: { ...settings.respondent, requiredParams: newParams },
+                      });
+                    }}
+                    placeholder="パラメータ名"
+                    className="max-w-xs"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    onClick={() => {
+                      const newParams = (settings.respondent?.requiredParams || []).filter(
+                        (_, idx) => idx !== i
+                      );
+                      setSettings({
+                        ...settings,
+                        respondent: { ...settings.respondent, requiredParams: newParams },
+                      });
+                    }}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setSettings({
+                    ...settings,
+                    respondent: {
+                      ...settings.respondent,
+                      requiredParams: [...(settings.respondent?.requiredParams || []), ""],
+                    },
+                  })
+                }
+              >
+                <Plus className="mr-1 h-3 w-3" />
+                パラメータを追加
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">
+            <div className="flex items-center gap-2">
+              <ExternalLink className="h-4 w-4" />
+              リダイレクト設定
+            </div>
+          </CardTitle>
+          <CardDescription>
+            回答完了後や対象外判定時に外部URLへ自動リダイレクトします。未設定の場合はアプリ内の完了/対象外ページを表示します。
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>回答完了後のリダイレクトURL</Label>
+            <Input
+              value={settings.redirect?.completionUrl || ""}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  redirect: { ...settings.redirect, completionUrl: e.target.value },
+                })
+              }
+              placeholder="https://example.com/thanks"
+            />
+          </div>
+          <div>
+            <Label>対象外(スクリーナーアウト)時のリダイレクトURL</Label>
+            <Input
+              value={settings.redirect?.disqualifyUrl || ""}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  redirect: { ...settings.redirect, disqualifyUrl: e.target.value },
+                })
+              }
+              placeholder="https://example.com/screenout"
+            />
+          </div>
+          <div>
+            <Label>クオータ上限到達時のリダイレクトURL</Label>
+            <Input
+              value={settings.redirect?.quotaFullUrl || ""}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  redirect: { ...settings.redirect, quotaFullUrl: e.target.value },
+                })
+              }
+              placeholder="https://example.com/quota-full"
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>URLパラメータを引き継ぐ</Label>
+              <p className="text-xs text-muted-foreground">
+                回答URLに付与されたパラメータ（uid等）をリダイレクト先にも付与します
+              </p>
+            </div>
+            <Switch
+              checked={settings.redirect?.passParams ?? false}
+              onCheckedChange={(v) =>
+                setSettings({
+                  ...settings,
+                  redirect: { ...settings.redirect, passParams: v },
+                })
+              }
             />
           </div>
         </CardContent>
