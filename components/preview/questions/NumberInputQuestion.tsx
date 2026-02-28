@@ -14,7 +14,10 @@ export function NumberInputQuestion({ question, value, onChange }: Props) {
     <Input
       type="number"
       value={value ?? ""}
-      onChange={(e) => onChange(Number(e.target.value))}
+      onChange={(e) => {
+        const v = e.target.value;
+        onChange(v === "" ? (undefined as unknown as number) : Number(v));
+      }}
       min={question.validation?.minValue}
       max={question.validation?.maxValue}
       placeholder="数値を入力してください"
