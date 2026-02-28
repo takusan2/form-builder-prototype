@@ -172,6 +172,14 @@ export default function QuotasPage() {
     p.questions.map((q) => ({ ...q, pageTitle: p.title }))
   );
 
+  // 計算変数を条件のソースとして追加
+  const cvOptions = (survey.computedVariables || []).flatMap((cv) =>
+    cv.outputMapping.map((out) => ({
+      id: `_cv.${out.variableId}`,
+      label: `[変数] ${out.label || out.variableId}`,
+    }))
+  );
+
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6">
       {isLocked && (
@@ -301,6 +309,18 @@ export default function QuotasPage() {
                                     {q.pageTitle} - {q.text || "（無題）"}
                                   </SelectItem>
                                 ))}
+                                {cvOptions.length > 0 && (
+                                  <>
+                                    <SelectItem value="_cv_separator" disabled>
+                                      ── 計算変数 ──
+                                    </SelectItem>
+                                    {cvOptions.map((cv) => (
+                                      <SelectItem key={cv.id} value={cv.id}>
+                                        {cv.label}
+                                      </SelectItem>
+                                    ))}
+                                  </>
+                                )}
                               </SelectContent>
                             </Select>
 

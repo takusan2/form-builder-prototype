@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 const tabs = [
   { label: "編集", href: "edit" },
   { label: "ロジック", href: "logic" },
+  { label: "外部ロジック", href: "computed" },
   { label: "設定", href: "settings" },
   { label: "Webhook", href: "webhooks" },
   { label: "クオータ", href: "quotas" },

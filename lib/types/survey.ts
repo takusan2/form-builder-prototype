@@ -198,6 +198,48 @@ export interface Quota {
 }
 
 // =============================================
+// 計算変数（外部ロジック）
+// =============================================
+
+export interface ComputedVariableInput {
+  /** 参照する設問ID */
+  questionId: string;
+  /** 外部APIに送るパラメータ名 */
+  paramName: string;
+}
+
+export interface ComputedVariableOutput {
+  /** APIレスポンスから取り出すキー */
+  responseKey: string;
+  /** 内部で使う変数ID（分岐・クオータの条件で参照） */
+  variableId: string;
+  /** 表示ラベル */
+  label: string;
+}
+
+export interface ComputedVariable {
+  id: string;
+  /** 表示名 */
+  name: string;
+  /** 呼び出すエンドポイントURL */
+  endpoint: string;
+  /** いつ呼び出すか */
+  trigger: {
+    type: "on_page_leave";
+    pageId: string;
+  };
+  /** 送信する回答データのマッピング */
+  inputMapping: ComputedVariableInput[];
+  /** レスポンスから取り出す変数のマッピング */
+  outputMapping: ComputedVariableOutput[];
+  /** API障害時のフォールバック値 (variableId -> value) */
+  fallbackValues?: Record<string, string>;
+  /** タイムアウト(ms) デフォルト5000 */
+  timeout?: number;
+  enabled: boolean;
+}
+
+// =============================================
 // サーベイ構造
 // =============================================
 
@@ -245,6 +287,7 @@ export interface Survey {
   settings: SurveySettings;
   structure: SurveyStructure;
   quotas: Quota[];
+  computedVariables: ComputedVariable[];
   createdAt: string;
   updatedAt: string;
 }

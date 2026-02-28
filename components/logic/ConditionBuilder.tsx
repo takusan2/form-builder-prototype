@@ -1,6 +1,6 @@
 "use client";
 
-import type { ConditionGroup, Condition, Question, ConditionOperator } from "@/lib/types/survey";
+import type { ConditionGroup, Condition, Question, ConditionOperator, ComputedVariable } from "@/lib/types/survey";
 import {
   Select,
   SelectContent,
@@ -34,6 +34,7 @@ interface QuestionInfo extends Question {
 interface ConditionBuilderProps {
   conditionGroup: ConditionGroup;
   questions: QuestionInfo[];
+  computedVariables?: ComputedVariable[];
   onChange: (group: ConditionGroup) => void;
   disabled?: boolean;
 }
@@ -41,9 +42,18 @@ interface ConditionBuilderProps {
 export function ConditionBuilder({
   conditionGroup,
   questions,
+  computedVariables,
   onChange,
   disabled,
 }: ConditionBuilderProps) {
+  // 計算変数を条件の選択肢として追加
+  const cvOptions = (computedVariables || []).flatMap((cv) =>
+    cv.outputMapping.map((out) => ({
+      id: `_cv.${out.variableId}`,
+      label: `[変数] ${out.label || out.variableId}`,
+      cvName: cv.name,
+    }))
+  );
   const updateCondition = (index: number, updates: Partial<Condition>) => {
     const newConditions = [...conditionGroup.conditions];
     newConditions[index] = { ...newConditions[index], ...updates };
@@ -114,6 +124,18 @@ export function ConditionBuilder({
                       {q.pageTitle} - {q.text || "（無題）"}
                     </SelectItem>
                   ))}
+                  {cvOptions.length > 0 && (
+                    <>
+                      <SelectItem value="_cv_separator" disabled>
+                        ── 計算変数 ──
+                      </SelectItem>
+                      {cvOptions.map((cv) => (
+                        <SelectItem key={cv.id} value={cv.id}>
+                          {cv.label}
+                        </SelectItem>
+                      ))}
+                    </>
+                  )}
                 </SelectContent>
               </Select>
 

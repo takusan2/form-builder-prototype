@@ -14,7 +14,8 @@ model Survey {
   status      String   @default("draft") // draft | published | closed
   settings    Json     @default("{}")
   structure   Json     @default("{}")
-  quotas      Json     @default("[]")
+  quotas             Json     @default("[]")
+  computedVariables  Json     @default("[]")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

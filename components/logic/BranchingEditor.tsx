@@ -123,6 +123,7 @@ export function BranchingEditor() {
                 <ConditionBuilder
                   conditionGroup={rule.conditionGroup}
                   questions={allQuestions}
+                  computedVariables={survey.computedVariables}
                   onChange={(conditionGroup: ConditionGroup) =>
                     updateBranchingRule(page.id, rule.id, { conditionGroup })
                   }

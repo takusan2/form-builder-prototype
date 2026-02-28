@@ -1,4 +1,4 @@
-import type { Survey, SurveySettings, SurveyStructure, Quota } from "@/lib/types/survey";
+import type { Survey, SurveySettings, SurveyStructure, Quota, ComputedVariable } from "@/lib/types/survey";
 import type { Survey as PrismaSurvey } from "@/lib/generated/prisma/client";
 
 export function parseSurvey(raw: PrismaSurvey): Survey {
@@ -20,6 +20,7 @@ export function parseSurvey(raw: PrismaSurvey): Survey {
     settings: raw.settings as unknown as SurveySettings,
     structure: raw.structure as unknown as SurveyStructure,
     quotas,
+    computedVariables: (raw.computedVariables as unknown as ComputedVariable[]) || [],
     createdAt: raw.createdAt.toISOString(),
     updatedAt: raw.updatedAt.toISOString(),
   };
@@ -33,5 +34,6 @@ export function serializeSurvey(survey: Partial<Survey>) {
   if (survey.settings !== undefined) data.settings = survey.settings;
   if (survey.structure !== undefined) data.structure = survey.structure;
   if (survey.quotas !== undefined) data.quotas = survey.quotas;
+  if (survey.computedVariables !== undefined) data.computedVariables = survey.computedVariables;
   return data;
 }

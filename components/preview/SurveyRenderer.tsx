@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import type { Survey, ResponseData, AnswerValue, SurveyPage } from "@/lib/types/survey";
+import type { Survey, ResponseData, AnswerValue } from "@/lib/types/survey";
 import { PageRenderer } from "./PageRenderer";
 import { ProgressBar } from "./ProgressBar";
 import { NavigationButtons } from "./NavigationButtons";
@@ -48,8 +48,29 @@ export function SurveyRenderer({ survey, isPreview, onComplete, onDisqualify }: 
       return;
     }
 
-    // Determine next page
-    const result = determineNextPage(currentPage, pages, answers);
+    // 計算変数の実行（サーバーサイドプロキシ経由）
+    let latestAnswers = answers;
+    if (survey.computedVariables?.length > 0) {
+      try {
+        const res = await fetch(`/api/surveys/${survey.id}/computed`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pageId: currentPage.id, answers }),
+        });
+        if (res.ok) {
+          const { variables } = await res.json();
+          if (variables && Object.keys(variables).length > 0) {
+            latestAnswers = { ...answers, ...variables };
+            setAnswers(latestAnswers);
+          }
+        }
+      } catch (err) {
+        console.warn("[ComputedVariables] proxy call failed", err);
+      }
+    }
+
+    // Determine next page（計算変数の結果も含めて分岐判定）
+    const result = determineNextPage(currentPage, pages, latestAnswers);
 
     switch (result.type) {
       case "go_to_page": {
@@ -79,7 +100,7 @@ export function SurveyRenderer({ survey, isPreview, onComplete, onDisqualify }: 
     }
 
     setErrors([]);
-  }, [submitting, visibleQuestions, allQuestions, answers, currentPage, pages, currentPageIndex, onDisqualify]);
+  }, [submitting, visibleQuestions, allQuestions, answers, currentPage, pages, currentPageIndex, onDisqualify, survey.computedVariables]);
 
   const handleBack = useCallback(() => {
     if (!survey.settings.allowBack) return;
